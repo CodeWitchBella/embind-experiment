@@ -3,44 +3,114 @@
 
 using namespace emscripten;
 
-struct B
+int counter = 0;
+
+struct Nested
 {
     int num;
-    B()
+    Nested()
     {
-        printf("B::B()\n");
+        printf("Nested::Nested()\n");
+        counter++;
     }
-    B(const B &b)
+    Nested(const Nested &b)
     {
-        printf("B::B(&b)\n");
+        printf("Nested::Nested(&b)\n");
         num = b.num;
+        counter++;
     }
-    ~B()
+    ~Nested()
     {
-        printf("B::~B()\n");
+        printf("Nested::~Nested()\n");
+        counter--;
     }
 };
 
-struct A
+struct RootClass
 {
-    B field;
-    A()
+    Nested field;
+    RootClass()
     {
-        printf("A::A()\n");
+        printf("RootClass::RootClass()\n");
+        counter++;
     }
-    A(const A &a)
+    RootClass(const RootClass &a)
     {
-        printf("A::A(&a)\n");
+        printf("RootClass::RootClass(&)\n");
         field = a.field;
+        counter++;
     }
-    ~A()
+    ~RootClass()
     {
-        printf("A::~A()\n");
+        printf("RootClass::~RootClass()\n");
+        counter--;
     }
 };
+
+struct RootValue
+{
+    Nested field;
+    RootValue()
+    {
+        printf("RootValue::RootValue()\n");
+        counter++;
+    }
+    RootValue(const RootValue &a)
+    {
+        printf("RootValue::RootValue(&)\n");
+        field = a.field;
+        counter++;
+    }
+    ~RootValue()
+    {
+        printf("RootValue::~RootValue()\n");
+        counter--;
+    }
+};
+
+struct WrapperClass
+{
+    RootValue field;
+    WrapperClass()
+    {
+        printf("WrapperClass::WrapperClass()\n");
+        counter++;
+    }
+    WrapperClass(const WrapperClass &a)
+    {
+        printf("WrapperClass::WrapperClass(&)\n");
+        field = a.field;
+        counter++;
+    }
+    ~WrapperClass()
+    {
+        printf("WrapperClass::~WrapperClass()\n");
+        counter--;
+    }
+};
+
+RootValue getRootValue()
+{
+    return RootValue{};
+}
+
+Nested getNested()
+{
+    return {};
+}
+
+int readCounter()
+{
+    return counter;
+}
 
 EMSCRIPTEN_BINDINGS(my_module)
 {
-    class_<B>("B").constructor<>().property("num", &B::num);
-    class_<A>("A").constructor<>().property("field", &A::field);
+    class_<Nested>("Nested").constructor<>().property("num", &Nested::num);
+    class_<RootClass>("RootClass").constructor<>().property("field", &RootClass::field);
+    class_<WrapperClass>("WrapperClass").constructor<>().property("field", &WrapperClass::field);
+    value_object<RootValue>("RootValue").field("field", &RootValue::field);
+    function("getRootValue", getRootValue);
+    function("getNested", getNested);
+    function("readCounter", readCounter);
 }
